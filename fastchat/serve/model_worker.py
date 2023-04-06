@@ -1,6 +1,7 @@
 """
 A model worker executes the model.
 """
+import os
 import argparse
 import asyncio
 import dataclasses
@@ -47,7 +48,11 @@ def load_model(model_path, num_gpus, wbits, groupsize):
             "max_memory": {i: "13GiB" for i in range(num_gpus)},
         }
 
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model_load_path = f"./models/{model_path}"
+    if not os.path.isdir(model_load_path):
+        model_load_path = model_path
+
+    tokenizer = AutoTokenizer.from_pretrained(model_load_path)
     
     if wbits > 0:
         from fastchat.serve.load_gptq_model import load_quantized
@@ -131,8 +136,12 @@ class ModelWorker:
         if model_semaphore is None:
             return 0
         else:
-            return args.limit_model_concurrency - model_semaphore._value + len(
-                model_semaphore._waiters)
+            try:
+                return args.limit_model_concurrency - model_semaphore._value + len(
+                    model_semaphore._waiters)
+            except Exception as e:
+                print(f"ERROR: exception encountered: {e}")
+                return 0
 
     def get_status(self):
         return {

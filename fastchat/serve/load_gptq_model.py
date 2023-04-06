@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 import torch
@@ -44,7 +45,8 @@ def load_quant(model, checkpoint, wbits, groupsize=-1, faster_kernel=False, excl
 
 
 def load_quantized(model_name, wbits=4, groupsize=128, threshold=128):
-    model_name = model_name.replace('/', '_')
+    if not os.path.isdir(f'./models/{model_name}'):
+        model_name = model_name.replace('/', '_')
     path_to_model = Path(f'./models/{model_name}')
     found_pts = list(path_to_model.glob("*.pt"))
     found_safetensors = list(path_to_model.glob("*.safetensors"))
